@@ -1,0 +1,18 @@
+{
+  "name": "birthday_scene",
+  "version": "1.0.0",
+  "description": "",
+  "main": "webpack.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon"
+  },
+  "keywords": [],
+  "author": "Derek Barnhart <derekbarnhart@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "nodemon": "^1.11.0",
+    "vue": "^2.1.10",
+    "webpack": "^1.14.0"
+  }
+}

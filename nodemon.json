@@ -1,0 +1,7 @@
+{
+  "exec":"webpack",
+  "watch":[
+    "src/",
+    "index.html"
+  ]
+}

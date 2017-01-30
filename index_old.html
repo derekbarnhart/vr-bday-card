@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Happy Birthday</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/0.4.0/aframe.js"></script>
+    <script src="//cdn.rawgit.com/donmccurdy/aframe-physics-system/v1.2.0/dist/aframe-physics-system.min.js"></script>
+
+
+    <script>
+
+      var RADIANS_IN_CIRCLE = 6.283185307179586
+      var balloonForce = new CANNON.Vec3( 0, 9.8, 0)
+      function normalizeRotation(radians){
+        return (radians % RADIANS_IN_CIRCLE) + (radians < 0 ? RADIANS_IN_CIRCLE : 0)
+      }
+
+      AFRAME.registerComponent('body-constraint',{
+
+        schema:{
+          type:{
+            default:''
+          }
+        },
+        init:function(){
+
+
+
+        }
+      })
+
+
+      AFRAME.registerComponent('sector-listener',{})
+
+
+      AFRAME.registerComponent('sector-events',{
+        schema:{
+            events:{
+                default:['quad1','quad2','quad3','quad4'],
+                type: 'array'
+            }
+        },
+        init:function(data){
+
+          var radiansPerSector = (360/ this.data.events.length) * Math.PI / 180
+
+          this.bounds = this.data.events.map(function(eventname,i){
+            return {
+              min:i* radiansPerSector,
+              max:(i+1) * radiansPerSector,
+              name: eventname
+            }
+          })
+
+          this.current_sector = this.data.events[0]
+          this.el.last_rot_y = normalizeRotation(this.el.object3D.rotation.y)
+
+        },
+        tick:function(data){
+          var thisY = normalizeRotation(this.el.object3D.rotation.y)
+          if( thisY !== this.el.last_rot_y){
+              //Finda
+              var currentSector = this.current_sector;
+              for(var i=0; i < this.bounds.length; i++){
+                var thisBound = this.bounds[i]
+                if(thisY >= thisBound.min && thisY < thisBound.max ){
+                  currentSector = thisBound.name
+                  break
+                }
+              }
+              if(! (this.current_sector === currentSector) ){
+
+                  document.querySelector('[sector-listener]').emit('sector_event_'+currentSector,
+                  { new:currentSector, old:this.current_sector},true)
+                  this.current_sector = currentSector;
+                  console.log('Sector change: ',currentSector);
+              }
+          }
+          this.el.last_rot_y = thisY
+        }
+      })
+
+
+      AFRAME.registerComponent('hang',{
+        init:function(){
+          var el = this.el;
+          el.addEventListener('body-loaded',function(){
+            var pos = this.getAttribute('position')
+            var anchor = new CANNON.Body({mass:0})
+            anchor.position.set( pos.x, pos.y+3, pos.z)
+            var body = this.body;
+
+            var spring = new CANNON.Spring(anchor, body,{
+                localAnchorA: new CANNON.Vec3(pos.x, pos.y+3, pos.z),
+                localAnchorB: new CANNON.Vec3(pos.x, pos.y, pos.z),
+                restLength : 1,
+                stiffness : 0,
+                damping : 0,
+            });
+
+            body.world.addEventListener("postStep",function(event){
+              spring.applyForce();
+            });
+
+          })
+        }
+
+      })
+
+
+      AFRAME.registerComponent("test",{
+        init: function(){
+          var el = this.el;
+          el.addEventListener('body-loaded',function(){
+
+            var pos = this.getAttribute('position')
+            var anchor = new CANNON.Body({mass:0})
+            anchor.position.set( pos.x, 0, pos.z)
+            //this.body.world.addConstraint(new CANNON.DistanceConstraint( this.body,anchor, pos.y ))
+            var body = this.body;
+
+            var spring = new CANNON.Spring(anchor,body,{
+                localAnchorA: new CANNON.Vec3(pos.x, 0, pos.z),
+                localAnchorB: new CANNON.Vec3(pos.x, pos.y, pos.z),
+                restLength : 1,
+                stiffness : 10,
+                damping : 0,
+            });
+
+
+            this.body.world.addEventListener("postStep",function(event){
+              var pos = el.object3D.getWorldPosition()
+              body.applyForce( balloonForce,
+                new CANNON.Vec3(pos.x, pos.y, pos.z))
+              spring.applyForce();
+            });
+
+          })
+
+
+
+        }
+        // tick: function(){
+        //   if('body' in this.el){
+        //     //var pos = this.el.getAttribute('position')
+        //     var pos = this.el.object3D.getWorldPosition()
+        //     this.el.body.applyForce( balloonForce,
+        //       new CANNON.Vec3(pos.x, pos.y, pos.z))
+        //
+        //
+        // }
+
+      })
+    </script>
+  </head>
+  <body>
+    <a-scene fog="type:linear; color:#aaa; near:1;far:1000;">
+
+      <!-- Assets -->
+      <a-assets>
+        <img id="sky_texture" src="assets/lichtung_img.jpg"></img>
+        <img id="ground_texture" src="assets/GrassGreenTexture0002.jpg"></img>
+        <img id="fence_texture" src="assets/TexturesCom_WoodBamboo0080_1_seamless_S.jpg"></img>
+
+        <a-asset-item id="balloon" src="assets/balloon.obj"></a-asset-item>
+        <a-asset-item id="house" src="assets/3dhome.obj"></a-asset-item>
+        <a-asset-item id="pinata" src="assets/pinata2.obj"></a-asset-item>
+        <a-asset-item id="pinata_mtl" src="assets/pinata2.mtl"></a-asset-item>
+        <a-asset-item id="bat" src="assets/bat.obj"></a-asset-item>
+        <a-asset-item id="table" src="assets/table.obj"></a-asset-item>
+        <a-asset-item id="tree" src="assets/tree.obj"></a-asset-item>
+        <a-asset-item id="pinata" src="assets/pinata.obj"></a-asset-item>
+
+        <a-mixin id="bamboo" material="src: #fence_texture; repeat: 4 1"></a-mixin>
+      </a-assets>
+
+      <!-- Camera -->
+      <a-entity camera="userHeight:10" look-controls
+      wasd-controls="fly:true;acceleration:320;" sector-events></a-entity>
+
+      <a-sky src="#sky_texture"></a-sky>
+
+
+      <a-plane id="ground"
+      material="src: #ground_texture; repeat: 4 4;" static-body
+      position="0 0 0" height="100" width="100" rotation="-90 0 0"></a-plane>
+
+      <a-entity obj-model="obj: #house" material="src:#fence_texture;"
+      position="0 0 -45" rotation="0 90 0" scale=".2 .2 .2"></a-entity>
+
+      <!-- <a-sphere test radius="2" dynamic-body="body:sphere; mass:1" color="red" position="0 12 -3" ></a-sphere> -->
+      <!-- <a-sphere test radius="2" dynamic-body="body:sphere; mass:1; linearDamping:.1;angularDamping:1"
+      color="blue" position="-4 10 0" ></a-sphere>
+      <a-sphere test radius="2" dynamic-body="body:sphere; mass:1;  linearDamping:.1;angularDamping:1"
+      color="yellow" position="-6 10 -2" ></a-sphere>
+      <a-sphere test radius="2" dynamic-body="body:sphere; mass:1; linearDamping:.1;angularDamping:1"
+      color="red" position="-2 10 -4" ></a-sphere> -->
+
+      <!-- Table -->
+      <a-entity obj-model="obj: #table" material="color: brown"
+      position="20 0 5" rotation="-90 0 0" scale=".5 .5 .5"></a-entity>
+
+      <!-- Tree and pinata -->
+      <a-entity position="0 0 -10">
+        <!-- <a-entity obj-model="obj: #tree" material="shininess:0; color: darkgreen"
+         rotation="0 0 0" scale=".5 .5 .5"></a-entity> -->
+
+         <a-entity>
+           <a-box height="15" width=".5" depth=".5" color="black"
+           position="0 7.5 0"
+           ></a-box>
+           <a-box height=".5" width="7" depth=".5" color="black"
+            position="3.25 15.25 0"></a-box>
+         </a-entity>
+
+
+         <a-entity position="4 15 0">
+           <a-animation attribute="rotation" direction="alternate" repeat="indefinate"
+            from="-1 0 -2" to="1 0 2" delay="50" duration="3000" ></a-animation>
+            <a-box height="5" width=".1" depth=".1" color="black"
+            position="1 -2.5 0"></a-box>
+            <a-entity position="0 -5 -.8" rotation="0 180 0">
+             <!-- <a-animation attribute="rotation" direction="alternate" repeat="indefinate"
+               from="0 0 0" to="0 360 0" delay="50" duration="6000"></a-animation> -->
+             <a-entity obj-model="obj: #pinata; mtl:#pinata_mtl" scale="1 1 1">
+               <a-animation attribute="rotation" direction="alternate" repeat="indefinate"
+                from="0 -10 0" to="0 10 0" delay="50" duration="3000" ></a-animation>
+             </a-entity>
+           </a-entity>
+         </a-entity>
+
+      </a-entity>
+
+
+      <!-- Decoration pile -->
+      <a-entity position="-4 0 -7" rotation="0 0 0">
+
+        <!-- Balloons -->
+        <!-- <a-entity dynamic-body="mass:1" test obj-model="obj: #balloon" material="shininess:100; color: red"
+          position="0 13 0" rotation="180 0 0" scale=".01 .01 .01"></a-entity>
+        <a-entity obj-model="obj: #balloon" dynamic-body="mass:1" test material="shininess:100; color: yellow"
+          position="-2 10 2" rotation="180 0 0" scale=".01 .01 .01"></a-entity>
+        <a-entity obj-model="obj: #balloon" dynamic-body="mass:1" test material="shininess:100; color: blue"
+          position="-1 10 -1" rotation="180 0 0" scale=".01 .01 .01"></a-entity> -->
+
+        <!-- Presents -->
+        <a-box position="0 .5 0" rotation="0 45 0"  depth="2" width="3" height="1" color="orange"></a-box>
+        <a-box position="0 2 0"   depth="2" width="2" height="2" color="purple"></a-box>
+        <a-box position="0 .5 0" rotation="0 45 0" depth="2" width="3" height="1" color="orange"></a-box>
+        <a-box position="0 .1.5 0" rotation="0 0 0" depth="6" width="6" height=".3" color="pink"></a-box>
+      </a-entity>
+
+
+
+
+      <!--Fence -->
+      <a-box position="50 4 0" depth="100" height="8" width="2" mixin="bamboo"></a-box>
+      <a-box position="-50 4 0" depth="100" height="8" width="2" mixin="bamboo"
+      ></a-box>
+      <a-box position="0 4 50" rotation="0 -90 0" depth="100" height="8" mixin="bamboo"
+      width="2" ></a-box>
+      <a-box position="0 4 -50" rotation="0 -90 0" depth="100" height="8" mixin="bamboo"
+      width="2" ></a-box>
+
+
+      <a-light
+        type="point"
+        color="white"
+        intensity="1"
+        position="2 20 4">
+        <a-animation attribute="color" sector-listener to="yellow" duration="500"
+          begin="sector_event_quad1-"></a-animation>
+        <a-animation attribute="color" sector-listener to="blue" duration="500"
+            begin="sector_event_quad2-"></a-animation>
+        <a-animation attribute="color" sector-listener to="red" duration="500"
+            begin="sector_event_quad3-"></a-animation>
+        <a-animation attribute="color" sector-listener to="green" duration="500"
+            begin="sector_event_quad4-"></a-animation>
+      </a-light>
+
+  </a-scene>
+
+  </body>
+</html>

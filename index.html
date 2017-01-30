@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>
+    </title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/0.4.0/aframe.js"></script>
+    <script src="//cdn.rawgit.com/donmccurdy/aframe-physics-system/v1.2.0/dist/aframe-physics-system.min.js"></script>
+    <script src="https://rawgit.com/dmarcos/a-invaders/master/js/components/explode.js"></script>
+    <script src="dist/bundle.js"></script>
+    <style>
+      body {
+        height:100%;
+        background:#3b3b3b;
+      }
+
+    </style>
+  </head>
+  <body>
+      <a-scene physics="debug:true">
+        <a-assets>
+          <!-- <img id="sky_texture" src="assets/lichtung_img.jpg"></img> -->
+          <img id="ground_texture" src="assets/GrassGreenTexture0002.jpg"></img>
+          <img id="bamboo_texture" src="assets/TexturesCom_WoodBamboo0080_1_seamless_S.jpg"></img>
+
+          <a-asset-item id="balloon" src="assets/balloon2.obj"></a-asset-item>
+<!--
+          <a-asset-item id="house" src="assets/3dhome.obj"></a-asset-item> -->
+          <a-asset-item id="pinata" src="assets/pinata2.obj"></a-asset-item>
+          <a-asset-item id="pinata_mtl" src="assets/pinata2.mtl"></a-asset-item>
+          <!-- <a-asset-item id="bat" src="assets/bat.obj"></a-asset-item>
+          <a-asset-item id="table" src="assets/table.obj"></a-asset-item>
+          <a-asset-item id="tree" src="assets/tree.obj"></a-asset-item>
+          <a-asset-item id="pinata" src="assets/pinata.obj"></a-asset-item> -->
+
+          <!-- <a-mixin id="bamboo" material="src: #fence_texture; repeat: 4 1"></a-mixin> -->
+        </a-assets>
+
+
+        <a-entity camera="userHeight: 1.6" rotation="0 -90 0" look-controls
+          wasd-controls="fly:false;">
+          <a-entity cursor="fuse: true;"
+            position="0 0 -1"
+            scale=".01 .01 .01"
+            geometry="primitive: ring"
+            material="color: black; shader: flat">
+          </a-entity>
+        </a-entity>
+
+      <a-entity id="pinata_section" position="0 0 -5">
+
+        <a-entity position="-1.2 1.5 0">
+          <a-cylinder
+            material="src: #bamboo_texture; repeat: 1 2"
+            color="crimson" height="3" radius=".1">
+          </a-cylinder>
+
+          <a-cylinder
+            material="src: #bamboo_texture; repeat: 1 2s"
+            color="crimson" height="2" radius=".1"
+            rotation="0 0 90"
+            position=".8 1.5 0">
+          </a-cylinder>
+        </a-entity>
+
+
+        <a-entity
+          hang
+          cursor-listener
+          obj-model="obj: #pinata; mtl:#pinata_mtl"
+          material="color:blue"
+          dynamic-body="mass:1;  linearDamping:.4; angularDamping:.05"
+          scale=".25 .25 .25"
+          position="0 0 0">
+        </a-entity>
+      </a-entity>
+
+      <a-entity id="ballon_section" position="3 0 -2">
+        <a-entity
+          dynamic-body="mass:1;"
+          obj-model="obj: #balloon;"
+          scale=".02 .02 .02"
+          position="0 6.6 0"
+          material="color:red">
+        </a-entity>
+      </a-entity>
+
+
+        <a-circle  material="src: #ground_texture; repeat: 6 6;" radius="15s" position="0 0 0" rotation="-90 0 0"></a-circle>
+        <a-plane id="ground"
+        static-body
+        position="0 -.01 0"
+        height="100" width="100" rotation="-90 0 0"></a-plane>
+
+        <a-light type="point" color="white" intensity="1" position="0 10
+        8"></a-light>
+
+        <a-light
+          type="ambient"
+          color="white"
+          intensity=".3"
+          position="0 10 8"></a-light>
+
+      </a-scene>
+  </body>
+
+</html>
